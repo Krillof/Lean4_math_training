@@ -74,11 +74,58 @@ and continue to use it.
 What about
 -/
 def ConvergentSeqTo (s : ℕ → ℝ) (a : ℝ) :=
-  ∀ ε > 0, ∃ N, ∀ n ≥ N, |s n - a| < ε
+  ∀ ε > 0,
+  ∃ N,
+  ∀ n ≥ N,
+  |s n - a| < ε
 
 /-
 Show that this definition is equivalent to
 -/
+
+theorem
+  exists_seq_with_const_mul
+  (s : ℕ → ℝ)
+  (a : ℝ)
+  (a_ne_zero : a ≠ 0)
+  : ∃ s' : ℕ → ℝ,
+    ∀ n : ℕ,
+    s n = a * s' n
+  := by
+  by_contra goal
+  push_neg at goal
+  specialize goal (fun n ↦ a⁻¹ * s n)
+  obtain ⟨n, goal⟩ := goal
+  rw [ne_eq] at goal
+  rw [← mul_assoc] at goal
+  rw [mul_inv_cancel₀ a_ne_zero, one_mul] at goal
+  have counter_goal : s n = s n := by
+    rfl
+  contradiction
+
+theorem
+  const_move_out
+  (b : ℝ)
+  : ConvergentSeqTo s a
+    ↔ ConvergentSeqTo (fun n : ℕ ↦ b * s n ) (b * a)
+  := by
+  constructor
+  . intro s_a_conv
+    intro ε ε_gt_0
+    dsimp
+    use 1
+    intro n n_ge_1
+    sorry -- TODO: easy to continue
+  . intro bs_ba_conv ε ε_gt_0
+    specialize bs_ba_conv ε ε_gt_0
+    obtain ⟨N,bs_ba_conv⟩ := bs_ba_conv
+    use N
+    intro n n_ge_N
+    specialize bs_ba_conv n n_ge_N
+    dsimp at bs_ba_conv
+    sorry -- TODO: easy to continue
+
+
 
 
 theorem
@@ -120,17 +167,47 @@ theorem
   rw [h]
   apply abs_add
 
+
+-- https://brandonrozek.com/blog/lean4-tutorial/
+#check Exists.intro
+#check Exists.elim
+
+
+
 theorem
   convergesTo_minus
-  {s t : ℕ → ℝ}
+  {s t r : ℕ → ℝ}
   {a b : ℝ}
   (cs : ConvergentSeqTo s a)
   (ct : ConvergentSeqTo t b)
+  (r_eq : ∀ n : ℕ, r n = s n - t n)
   : ConvergentSeqTo
-      (fun n ↦ s n + t n)
+      (fun n ↦ s n - t n)
       (a - b)
   := by
+  have minus_one_ne_zero : (-1 : ℝ) ≠ 0 := by
+    linarith
+  have t'_eq : ∃ t' : ℕ → ℝ,
+                ∀ n : ℕ,
+                t n = (-1) * t' n
+    := exists_seq_with_const_mul (t) (-1) minus_one_ne_zero
+  obtain ⟨t', t'_eq⟩ := t'_eq
+  intro ε ε_gt_0
+  dsimp
+  use 1
+  intro n n_gt_0
+  specialize t'_eq n
+  rw [t'_eq]
+  simp
+
+
+
+
   sorry
+
+
+
+
 
 theorem
   convergesTo_div
@@ -197,76 +274,77 @@ theorem
   sorry
 
 def
-  ConvergentFunByCauchyOverToEq
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  ConvergentFunByCauchyTo
+  {U : Set ℝ}
+  (f : U → ℝ)
   (a A : ℝ)
   :=
   ∀ ε > 0,
   ∃ δ > 0,
-  ∀ x ∈ U,
+  ∀ x : U,
   |x - a| < δ
   → |A - f x| < ε
 
 
 def
-  ConvergentFunByHeineOverToEq
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  ConvergentFunByHeineTo
+  {U : Set ℝ}
+  (f : U → ℝ)
   (a A : ℝ)
   :=
   ∀ ε > 0,
   ∀ s : ℕ → U,
-  ConvergentSeqTo (fun x : ℕ ↦ s x) a
+  ConvergentSeqTo (fun n : ℕ ↦ s n) a
   → ConvergentSeqTo
-      (fun x : ℕ ↦ f (s x)) A
+      (fun n : ℕ ↦ f (s n)) A
 
 
 theorem
   heine_def_eq_cauchy_def
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  {U : Set ℝ}
+  (f : U → ℝ)
   (a A : ℝ)
-  : ConvergentFunByCauchyOverToEq U (f) a A
+  : ConvergentFunByCauchyTo (f) a A
     ↔
-    ConvergentFunByHeineOverToEq U (f) a A
+    ConvergentFunByHeineTo (f) a A
   := by
   sorry
 
 def
-  ConvergentFunOverToEq
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  ConvergentFunTo
+  {U : Set ℝ}
+  (f : U → ℝ)
   (a A : ℝ)
   :=
-  ConvergentFunByCauchyOverToEq U f a A
+  ConvergentFunByCauchyTo f a A
 
 
 def
   BoundedFun
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  {U : Set ℝ}
+  (f : U → ℝ)
   :=
   ∃ A : ℝ,
-  ∀ x ∈ U,
+  ∀ x : U,
   |f x| ≤ A
 
 def
   InfinitelySmallFun
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  {U : Set ℝ}
+  (f : U → ℝ)
   (a : ℝ)
-  := ConvergentFunByCauchyOverToEq U f a 0
+  := ConvergentFunTo f a 0
 
 theorem
   conv_fun_alt_def_by_infsm_fun
   (U : Set ℝ)
-  (f : ℝ → ℝ)
+  (D : Set U)
+  (f : U → ℝ)
   :
-  ConvergentFunOverToEq U f a A
+  ConvergentFunTo f a A
   ↔
-  ∃ r : ℝ → ℝ,
-  InfinitelySmallFun U r a
+  ∃ r : U → ℝ,
+  InfinitelySmallFun r a
   → ∀ x : U,
   f x = A + r x
   := by
@@ -275,20 +353,20 @@ theorem
 
 theorem
   bound_fun_mul_infsm_fun_is_infsm
-  (U : Set ℝ)
-  (f g: ℝ → ℝ)
-  (f_infsm : InfinitelySmallFun U f f_a)
-  (g_bound : BoundedFun U g)
+  {U : Set ℝ}
+  (f g: U → ℝ)
+  (f_infsm : InfinitelySmallFun f f_a)
+  (g_bound : BoundedFun g)
   : InfinitelySmallFun
-      U (fun x : ℝ ↦ (f x) * (g x)) f_a
+      (fun x : U ↦ (f x) * (g x)) f_a
   := by
   sorry
 
 
 theorem
   first_wonderful_limit
-  (U : Set ℝ)
-  : ConvergentFunOverToEq U (fun x : ℝ ↦ (Real.sin x)/x) 0 1
+  {U : Set ℝ}
+  : ConvergentFunTo (fun x : U ↦ (Real.sin x)/x) 0 1
   := by
   sorry
 
@@ -305,29 +383,39 @@ theorem
 
 -- h = o(g)
 def
-  OhSmallOverOfTo
-  (U : Set ℝ)
-  (h g : ℝ → ℝ)
+  OhSmallTo
+  {U : Set ℝ}
+  (h g : U → ℝ)
   (a : ℝ)
-  := ConvergentFunOverToEq U (fun x : ℝ ↦ (h x)/(g x)) a 0
+  := ConvergentFunTo (fun x : U ↦ (h x)/(g x)) a 0
 
 
 
 theorem
   oh_small_mul_oh_small
-  (g1_o : OhSmallOverOfTo U g1 f a)
-  (g2_o : OhSmallOverOfTo U g2 f a)
-  : OhSmallOverOfTo U (fun x : ℝ ↦ (g1 x) * (g2 x)) f a
+  {U : Set ℝ}
+  {f g1 g2 : U → ℝ}
+  (g1_o : OhSmallTo g1 f a)
+  (g2_o : OhSmallTo g2 f a)
+  : OhSmallTo (fun x : U ↦ (g1 x) * (g2 x)) f a
   := by
   sorry
 
 def
-  ContinousFunOver
-  (U : Set ℝ)
-  (f : ℝ → ℝ)
+  ContinousFunAt
+  {U : Set ℝ}
+  (f : U → ℝ)
+  (x : U)
   :=
-  ∀ x ∈ U,
-  ConvergentFunOverToEq U f x (f x)
+  ConvergentFunTo (f) x (f x)
+
+def
+  ContinousFun
+  {U : Set ℝ}
+  (f : U → ℝ)
+  :=
+  ∀ x : U,
+  ContinousFunAt f x
 
 -- Here must be some properties of continous function
 
@@ -335,11 +423,15 @@ def
 
 theorem
   Bolzano_pos_sign_keeping_theorem
-  (f_cont : ContinousFunOver U f)
+  {U : Set ℝ}
+  {f : U → ℝ}
+  (f_cont : ContinousFun f)
   (x : U)
   (fx_ne_zero : f x > 0)
   :
-  ∃ a b : ℝ,
+  ∀ a b : U,
+  x ∈ Set.Ioo a b
+  →
   ∀ y ∈ Set.Ioo a b,
   f y > 0
   :=
@@ -347,19 +439,26 @@ theorem
 
 theorem
   Bolzano_neg_sign_keeping_theorem
-  (f_cont : ContinousFunOver U f)
+  {U : Set ℝ}
+  {f : U → ℝ}
+  (f_cont : ContinousFun f)
   (x : U)
   (fx_ne_zero : f x < 0)
   :
-  ∃ a b : ℝ,
+  ∀ a b : U,
+  x ∈ Set.Ioo a b
+  →
   ∀ y ∈ Set.Ioo a b,
-  f y < 0
+  f y > 0
   :=
   sorry
 
 theorem
   intermediate_value_theorem_pos_neg
-  (f_cont : ContinousFunOver (Set.Icc a b) f)
+  {U : Set ℝ}
+  {f : U → ℝ}
+  (f_cont : ContinousFun f)
+  {a b : U}
   (f_a_pos : f a > 0)
   (f_b_neg : f b < 0)
   :
@@ -370,9 +469,12 @@ theorem
 
 theorem
   intermediate_value_theorem_neg_pos
-  (f_cont : ContinousFunOver (Set.Icc a b) f)
-  (f_a_neg : f a < 0)
-  (f_b_pos : f b > 0)
+  {U : Set ℝ}
+  {f : U → ℝ}
+  (f_cont : ContinousFun f)
+  {a b : U}
+  (f_a_pos : f a > 0)
+  (f_b_neg : f b < 0)
   :
   ∃ c ∈ Set.Icc a b,
   f c = 0
@@ -382,7 +484,10 @@ theorem
 
 theorem
   second_Bolzano_theorem
-  (f_cont : ContinousFunOver (Set.Icc a b) f)
+  {U : Set ℝ}
+  {f : U → ℝ}
+  (f_cont : ContinousFun f)
+  {a b : U}
   (f_a_eq_A : f a = A)
   (f_b_eq_B : f b = B)
   (A_lt_C : A < C)
@@ -399,49 +504,55 @@ theorem
 
 theorem
   local_boundedness_of_cont_fun_on_interval
-  (f_cont : ContinousFunOver (Set.Icc a b) f)
+  {a b : ℝ}
+  {f : Set.Icc a b → ℝ}
+  (f_cont : ContinousFun f)
   :
-  BoundedFun (Set.Icc a b) f
+  BoundedFun f
   := by
   sorry
 
 theorem
   extreme_value_theorem
-  (f_cont : ContinousFunOver (Set.Icc a b) f)
+  {a b : ℝ}
+  {f : Set.Icc a b → ℝ}
+  (f_cont : ContinousFun f)
   :
-  ∃ c d : ℝ,
-  ∀ x ∈ Set.Icc a b,
+  ∃ c d : Set.Icc a b,
+  ∀ x : Set.Icc a b,
   f c ≤ f x ∧ f x ≤ f d
   := by
   sorry
 
 
+
 #check DifferentiableOn
 def
-  HasDerivativeOverInOf
-  (U D : Set ℝ)
-  (deriv_f f : ℝ → ℝ)
+  HasDerivative
+  {U : Set ℝ}
+  (f deriv_f : U → ℝ)
   :=
-  ∀ a ∈ D,
-  ConvergentFunOverToEq
-    U
-    (fun h : ℝ ↦ (f (a + h) - f a)/h)
-    0
-    (deriv_f a)
+  ∃ g : U → ℝ,
+  ∀ a : U,
+  OhSmallTo g f a
+  ∧
+  ∀ x : U,
+  f x - f a = (deriv_f a) * (x - a) + g x
+
 
 
 theorem
   power_deriv
-  (f_def_over : Set ℝ)
-  (diff_over : Set ℝ)
+  {U : Set ℝ}
   (n : ℕ)
-  : HasDerivativeOverInOf
-    f_def_over
-    diff_over
-    (fun x : ℝ ↦ n * x^(n-1))
-    (fun x : ℝ ↦ x^n)
+  : HasDerivative
+    (fun x : U ↦ x^(n+1))
+    (fun x : U ↦ (n+1) * x^n)
   := by
   sorry
+
+
+
 
 -- There must be other proofs for differentiation
 
