@@ -79,12 +79,60 @@ def ConvergentSeqTo (s : ℕ → ℝ) (a : ℝ) :=
   ∀ n ≥ N,
   |s n - a| < ε
 
+def
+  InfinitelyLargeSeq
+  (s : ℕ → ℝ) :=
+  ∀ A > 0,
+  ∃ N,
+  ∀ n ≥ N,
+  |s n| > A
+
+def
+  InfinitelySmallSeq
+  (s : ℕ → ℝ) :=
+  ∀ ε > 0,
+  ∃ N,
+  ∀ n ≥ N,
+  |s n| < ε
+
+def
+  BoundedSeq
+  (s : ℕ → ℝ) :=
+  ∃ A > 0,
+  ∀ n,
+  |s n| < A
+
+def
+  Subsequence
+  (s : ℕ → ℝ)
+  (ss : ℕ → ℝ)
+  :=
+  ∃ r : ℕ → ℕ,
+  ∀ n,
+  s (r n) = ss n
+
 /-
 Show that this definition is equivalent to
 -/
 
 theorem
-  exists_seq_with_const_mul
+  conv_seq_to_unique
+  (s_conv : ConvergentSeqTo s a)
+  : ∀ b : ℝ,
+    ConvergentSeqTo s b
+    → a = b
+  := by
+  sorry
+
+theorem
+  conv_seq_to_bounded
+  (s_conv : ConvergentSeqTo s a)
+  : BoundedSeq s
+  := by
+  sorry
+
+theorem
+  exists_conv_seq_to_with_const_mul
   (s : ℕ → ℝ)
   (a : ℝ)
   (a_ne_zero : a ≠ 0)
@@ -129,7 +177,7 @@ theorem
 
 
 theorem
-  convergesTo_const
+  conv_seq_to_const
   (a : ℝ)
   : ConvergentSeqTo (fun x : ℕ ↦ a) a
   := by
@@ -140,7 +188,7 @@ theorem
   apply εpos
 
 theorem
-  convergesTo_add
+  conv_seq_to_add
   {s t : ℕ → ℝ}
   {a b : ℝ}
   (cs : ConvergentSeqTo s a)
@@ -175,7 +223,7 @@ theorem
 
 
 theorem
-  convergesTo_minus
+  conv_seq_to_minus
   {s t r : ℕ → ℝ}
   {a b : ℝ}
   (cs : ConvergentSeqTo s a)
@@ -190,7 +238,7 @@ theorem
   have t'_eq : ∃ t' : ℕ → ℝ,
                 ∀ n : ℕ,
                 t n = (-1) * t' n
-    := exists_seq_with_const_mul (t) (-1) minus_one_ne_zero
+    := exists_conv_seq_to_with_const_mul (t) (-1) minus_one_ne_zero
   obtain ⟨t', t'_eq⟩ := t'_eq
   intro ε ε_gt_0
   dsimp
@@ -210,7 +258,7 @@ theorem
 
 
 theorem
-  convergesTo_div
+  conv_seq_to_div
   {s t : ℕ → ℝ}
   {a b : ℝ}
   (h : b ≠ 0)
@@ -222,37 +270,7 @@ theorem
   := by
   sorry
 
-def
-  InfinitelyLargeSeq
-  (s : ℕ → ℝ) :=
-  ∀ A > 0,
-  ∃ N,
-  ∀ n ≥ N,
-  |s n| > A
 
-def
-  InfinitelySmallSeq
-  (s : ℕ → ℝ) :=
-  ∀ ε > 0,
-  ∃ N,
-  ∀ n ≥ N,
-  |s n| < ε
-
-def
-  BoundedSeq
-  (s : ℕ → ℝ) :=
-  ∃ A > 0,
-  ∀ n,
-  |s n| < A
-
-def
-  Subsequence
-  (s : ℕ → ℝ)
-  (ss : ℕ → ℝ)
-  :=
-  ∃ r : ℕ → ℕ,
-  ∀ n,
-  s (r n) = ss n
 
 
 
@@ -532,10 +550,10 @@ def
   {U : Set ℝ}
   (f deriv_f : U → ℝ)
   :=
-  ∃ g : U → ℝ,
   ∀ a : U,
+  ∃ g : U → ℝ,
   OhSmallTo g f a
-  ∧
+  →
   ∀ x : U,
   f x - f a = (deriv_f a) * (x - a) + g x
 
@@ -551,10 +569,198 @@ theorem
   := by
   sorry
 
-
-
-
 -- There must be other proofs for differentiation
+
+def
+  HasIndefiniteIntegral
+  {U : Set ℝ}
+  (f ind_int_f: U → ℝ)
+  := HasDerivative ind_int_f f
+
+
+def
+  Partition
+  {U : Set ℝ}
+  (a b : ℝ)
+  (N : ℕ)
+  (s : ℕ → U)
+  :=
+  ∀ n : ℕ,
+  n ≤ N-1
+  →
+  s n ≤ s (n+1)
+  ∧
+  s 1 = a
+  ∧
+  s N = b
+
+
+def
+  MeshForPartition
+  {U : Set ℝ}
+  (q : ℝ)
+  (N : ℕ)
+  (s : ℕ → U)
+  :=
+  ∀ n : ℕ,
+  n ≤ N-1
+  →
+  |(s n).val - (s (n+1)).val| ≤ q
+
+
+def
+  TagsForPartition
+  {U : Set ℝ}
+  (tag : ℕ → U)
+  (N : ℕ)
+  (s : ℕ → U)
+  :=
+  ∀ n : ℕ,
+  n ≤ N-1
+  →
+  s n ≤ tag n
+  ∧
+  tag n ≤ s (n+1)
+
+def
+  HasDefiniteIntegral
+  {U : Set ℝ}
+  (a b : U)
+  (f : U → ℝ)
+  (integral_of_f : ℝ)
+  :=
+  ∀ ε > 0,
+  ∃ δ > 0,
+  ∀ s : ℕ → U,
+  ∃ N : ℕ,
+  ∃ tag : ℕ → U,
+  ∃ q : ℝ,
+  Partition a b N s
+  ∧
+  TagsForPartition tag N s
+  ∧
+  MeshForPartition q N s
+  ∧
+  q < δ
+  →
+  |integral_of_f
+  - ∑ k in Set.Icc 1 (N-1),
+    ((s (k+1) - s k) * f (tag k) )|
+  < ε
+
+
+theorem
+  def_int_in_point
+  {U : Set ℝ}
+  {a b : U}
+  {f : U → ℝ}
+  (def_int : HasDefiniteIntegral a a f f_int)
+  : f_int = 0
+  := by
+  sorry
+
+
+
+
+
+theorem
+  def_int_of_one
+  {U : Set ℝ}
+  {a b : U}
+  (def_int : HasDefiniteIntegral a b (fun x : U ↦ 1) f_int)
+  : f_int = b - a
+  := by
+  sorry
+
+
+
+/-
+!!!! TODO: Serious problem:
+Partitions in def_int definition
+assumed to have property "s n ≤ s (n+1)"
+so I should add to HasDefiniteIntegral
+definition case when a > b
+(look how same wath done
+using match cases for natural numbers...)
+-/
+theorem
+  def_int_swap_interval_borders
+  {U : Set ℝ}
+  {a b : U}
+  {f : U → ℝ}
+  (def_int : HasDefiniteIntegral a b f f_int)
+  : HasDefiniteIntegral b a f (-f_int)
+  := by
+  sorry
+
+theorem
+  def_int_const_out
+  {U : Set ℝ}
+  {a b : U}
+  {f : U → ℝ}
+  (c : U)
+  (def_int : HasDefiniteIntegral a b (fun x : U ↦ c * f x) f_int)
+  : HasDefiniteIntegral b a f (c*f_int)
+  := by
+  sorry
+
+--theorem def_int_sum...
+
+
+def
+  HasNDerivatives
+  {U : Set ℝ}
+  (f : U → ℝ)
+  (derivs : ℕ → U → ℝ)
+  (N : ℕ)
+  :=
+  f = derivs 0
+  ∧
+  ∀ n : ℕ,
+  n ≤ N
+  →
+  HasDerivative (derivs n) (derivs (n+1))
+
+
+/-
+Ordinary Differential Equation
+of Nth order
+-/
+def
+  ODEN
+  {U : Set ℝ}
+  (y : U → ℝ)
+  (y_derivs : ℕ → U → ℝ)
+  (N : ℕ)
+  (f : ℕ → (ℕ → U → ℝ) → U → ℝ)
+  (g : U → ℝ)
+  :=
+  HasNDerivatives y y_derivs N
+  ∧
+  f N y_derivs = g
+
+/-
+Linear Ordinary Differential Equations
+-/
+def
+  LODEN
+  {U : Set ℝ}
+  (y : U → ℝ)
+  (y_derivs : ℕ → U → ℝ)
+  (N : ℕ)
+  (f : ℕ → (ℕ → U → ℝ) → U → ℝ)
+  (g : U → ℝ)
+  :=
+  ODEN y y_derivs N f g
+  ∧
+  ∃ p : ℕ → U → ℝ,
+  ∀ x : U,
+  (f N y_derivs) x
+  = (y_derivs N) x
+  + (∑ k in Set.Icc 0 (N-1),
+      (p k x) * (y_derivs k x))
+
+
 
 
 /-
