@@ -111,18 +111,47 @@ def
   ∀ n,
   s (r n) = ss n
 
-/-
-Show that this definition is equivalent to
--/
+#check sub_eq_add_neg
 
 theorem
   conv_seq_to_unique
-  (s_conv : ConvergentSeqTo s a)
-  : ∀ b : ℝ,
-    ConvergentSeqTo s b
-    → a = b
-  := by
+  (s_conv_a : ConvergentSeqTo s a)
+  (s_conv_b : ConvergentSeqTo s b)
+  : a = b
+  :=
+  by
+  by_contra a_ne_b
+  dsimp [ConvergentSeqTo] at s_conv_a s_conv_b
+  have h0 : ∀ ε' > 0, |a - b| < ε' := by
+    intros ε' ε'_pos
+    have half_ε'_pos : ε' / 2 > 0 := sorry
+    have s_conv_a' := (s_conv_a (ε' / 2) half_ε'_pos)
+    have s_conv_b' := (s_conv_b (ε' / 2) half_ε'_pos)
+    cases s_conv_a' with | intro N_a s_conv_a'' =>
+      cases s_conv_b' with | intro N_b s_conv_b'' =>
+        let N := max N_a N_b
+        have N_ge_Na : N ≥ N_a := by simp [N]
+        have N_ge_Nb : N ≥ N_b := by simp [N]
+        have s_conv_a''' : |s N - a| < ε' / 2 := s_conv_a'' N N_ge_Na
+        have s_conv_b''' : |s N - b| < ε' / 2 := s_conv_b'' N N_ge_Nb
+        calc
+          |a - b| = |a - s N + s N - b| := by sorry
+          _ = |a - s N - (b - s N)| := by sorry
+          _ ≤ |a - s N| + |b - s N| := by sorry
+          _ < ε'/2 + ε'/2 := by sorry
+          _ = ε' := by sorry
+  have h1 : |a - b| = 0 := by
+    sorry
   sorry
+
+
+
+
+
+
+
+
+
 
 theorem
   conv_seq_to_bounded
