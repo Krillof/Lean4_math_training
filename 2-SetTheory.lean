@@ -100,6 +100,18 @@ theorem
 -/
 #check Subset.antisymm
 
+example {α : Type u} (s t : Set α)
+  : ¬(s ⊆ t) ↔ s \ t ≠ ∅
+  := by
+  constructor
+  . intro not_s_subset_t
+    contrapose! not_s_subset_t
+    intro x x_in_s
+    sorry
+  . intro s_minus_t_ne_emptyset
+    contrapose! s_minus_t_ne_emptyset
+    sorry
+
 /-
 ###################################################
 #############Infinite unions and intersections#####
