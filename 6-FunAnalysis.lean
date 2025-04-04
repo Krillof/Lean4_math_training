@@ -21,8 +21,10 @@ open Filter Topology MeasureTheory intervalIntegral
 
 
 #check nhds
-/- A set is called a neighborhood of `x` if it contains an open set around `x`. The set of all
-neighborhoods of `x` forms a filter, the neighborhood filter at `x`, is here defined as the
+/- A set is called a neighborhood of `x` if it contains
+an open set around `x`. The set of all
+neighborhoods of `x` forms a filter,
+the neighborhood filter at `x`, is here defined as the
 infimum over the principal filters of all open sets containing `x`.
 
 irreducible_def nhds (x : X) : Filter X :=
@@ -111,7 +113,8 @@ notation3 "∀ᶠ "(...)" in "f", "r:(scoped p => Filter.Eventually p f) => r
 -/
 
 
-/- `f.Frequently p` or `∃ᶠ x in f, p x` mean that `{x | ¬p x} ∉ f`. E.g., `∃ᶠ x in atTop, p x`
+/- `f.Frequently p` or `∃ᶠ x in f, p x` mean that `{x | ¬p x} ∉ f`.
+E.g., `∃ᶠ x in atTop, p x`
 means that there exist arbitrarily large `x` for which `p` holds true.
 
 protected def Frequently (p : α → Prop) (f : Filter α) : Prop :=

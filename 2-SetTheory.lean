@@ -98,7 +98,9 @@ theorem
 #############Subsets###############################
 ###################################################
 -/
+
 #check Subset.antisymm
+
 
 example {α : Type u} (s t : Set α)
   : ¬(s ⊆ t) ↔ s \ t ≠ ∅
@@ -111,6 +113,16 @@ example {α : Type u} (s t : Set α)
   . intro s_minus_t_ne_emptyset
     contrapose! s_minus_t_ne_emptyset
     sorry
+
+
+
+section
+variables {α : Type u} (s t : Set α)
+
+#check s ≤ t
+#check instLE
+
+end
 
 /-
 ###################################################

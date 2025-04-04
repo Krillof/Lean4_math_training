@@ -112,6 +112,15 @@ def
   s (r n) = ss n
 
 #check sub_eq_add_neg
+#check abs_sub
+#check abs_add
+#check add_le_add
+#check add_lt_add
+#check abs_sub_comm
+
+#check abs_nonneg
+#check abs_cases
+#check abs_eq_zero
 
 theorem
   conv_seq_to_unique
@@ -124,7 +133,10 @@ theorem
   dsimp [ConvergentSeqTo] at s_conv_a s_conv_b
   have h0 : ∀ ε' > 0, |a - b| < ε' := by
     intros ε' ε'_pos
-    have half_ε'_pos : ε' / 2 > 0 := sorry
+    have half_ε'_pos : ε' / 2 > 0 := by
+      apply div_pos ε'_pos
+      /- ⊢ 0 < 2-/
+      linarith
     have s_conv_a' := (s_conv_a (ε' / 2) half_ε'_pos)
     have s_conv_b' := (s_conv_b (ε' / 2) half_ε'_pos)
     cases s_conv_a' with | intro N_a s_conv_a'' =>
@@ -135,14 +147,25 @@ theorem
         have s_conv_a''' : |s N - a| < ε' / 2 := s_conv_a'' N N_ge_Na
         have s_conv_b''' : |s N - b| < ε' / 2 := s_conv_b'' N N_ge_Nb
         calc
-          |a - b| = |a - s N + s N - b| := by sorry
-          _ = |a - s N - (b - s N)| := by sorry
-          _ ≤ |a - s N| + |b - s N| := by sorry
-          _ < ε'/2 + ε'/2 := by sorry
-          _ = ε' := by sorry
+          |a - b| = |a - s N + s N - b| := by simp
+          _ = |a - s N - (b - s N)| := by simp
+          _ ≤ |a - s N| + |b - s N| := by
+            exact abs_sub (a - s N) (b - s N)
+          _ = |s N - a| + |s N - b| := by
+            conv =>
+              rhs
+              congr
+              . apply abs_sub_comm
+              . apply abs_sub_comm
+          _ < ε'/2 + ε'/2 := by
+            exact add_lt_add s_conv_a''' s_conv_b'''
+          _ = ε' := by linarith
   have h1 : |a - b| = 0 := by
+    have h11 : |a - b| ≥ 0 := abs_nonneg (a-b)
     sorry
-  sorry
+  have h2 : a = b := by
+    sorry -- use? abs_eq_zero
+  contradiction
 
 
 
